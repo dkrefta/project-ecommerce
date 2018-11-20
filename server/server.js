@@ -30,6 +30,27 @@ app.post("/api/users/register", (req, res) => {
   });
 });
 
+app.post("/api/users/login", (req, res) => {
+  // find the email
+  User.findOne({ email: req.body.email }, (err, user) => {
+    if (!user)
+      return res.json({
+        loginSuccess: false,
+        message: "Auth failes, email not found"
+      });
+    user.comparePassword(req.body.password, (err, isMatch) => {
+      if (!isMatch)
+        return res.json({ loginSuccess: false, message: "Wrong password" });
+      user.generateToken(err => {
+        if (err) return res.status(400).send(err);
+        res.cookie("w_auth", user.token).status(200).json({
+            loginSuccess: true
+          });
+      });
+    });
+  });
+});
+
 const port = process.env.PORT || 3002;
 
 app.listen(port, () => {
